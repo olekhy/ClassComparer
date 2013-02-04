@@ -118,11 +118,11 @@ OUT;
         }
 
         foreach ($this->getParamsDiff() as $n => $pd) {
-            //if (!empty($pd)) {
+            if (!empty($pd)) {
                 $paramsInfo[] = sprintf(
                     ' (%s) %s in path: %s', ($n + 1), join(', ', $pd), $paths[$n]
                 );
-            //}
+            }
         }
         $methodInfo = join("\n", $methodInfo);
         $paramsInfo = join("\n", $paramsInfo);
@@ -133,6 +133,7 @@ OUT;
         if (strlen($paramsInfo) > 0) {
             $paramsInfo = "parameters different:\n" . $paramsInfo;
         }
+
         return
             PHP_EOL
             . sprintf($format, $this->getMethodNameFull(), $methodInfo, $paramsInfo)

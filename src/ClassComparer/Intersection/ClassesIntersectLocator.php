@@ -7,13 +7,13 @@
  */
 namespace ClassComparer\Intersection;
 
-use Zend\Code\Scanner\FileScanner;
 use Exception;
-use Zend\Code\Scanner\ClassScanner;
+use Zend\Code\Scanner\FileScanner;
 
 
 class ClassIntersectLocator implements IntersectAware
 {
+
     /**
      * @var FilesIntersectLocator
      */
@@ -63,8 +63,9 @@ class ClassIntersectLocator implements IntersectAware
      */
     function getIntersection()
     {
+        echo 'Start computation of classes intersection' . PHP_EOL;
         $intersection = array();
-
+        //echo memory_get_usage();
         foreach ($this->getEntities() as $classFiles) {
 
             $classScanners = array();
@@ -78,23 +79,20 @@ class ClassIntersectLocator implements IntersectAware
                     $classNames = $fileScanner->getClassNames();
                 } catch (Exception $e)
                 {
-                    echo    sprintf(
+                    user_error(sprintf(
                         'Can not determine class name because file %s contains invalid class',
-                        $classFile
+                        $classFile),
+                        E_USER_NOTICE
                     );
-                    echo PHP_EOL;
-
                 }
 
 
                 if (count($classNames) > 1) {
-                    //throw new Exception\RangeException(
-                    echo    sprintf(
-                            'Can not intersect classes because file %s contains more then one class',
-                            $classFile
-                        );
-                    echo PHP_EOL;
-                    //);
+                    user_error(sprintf(
+                        'Can not intersect classes because file %s contains more than one class',
+                        $classFile),
+                        E_USER_WARNING
+                    );
                     $cachedClassNames = null;
                     continue;
                 }
@@ -115,10 +113,16 @@ class ClassIntersectLocator implements IntersectAware
                 }
             }
             if (!empty($classScanners)) {
+                if (extension_loaded('igbinary')) {
+                    $classScanners = igbinary_serialize($classScanners);
+                }
                 $intersection[] = $classScanners;
             }
         }
 
+        //echo PHP_EOL;
+        //echo memory_get_usage();
+        echo 'Finish computation of classes intersection' . PHP_EOL;
         return $intersection;
     }
 

@@ -43,10 +43,11 @@ class FilesIntersectLocator implements IntersectAware
      */
     public function getIntersection()
     {
+        echo 'Start computation of files intersection' . PHP_EOL;
         $entities = $this->getEntities();
         $directory = array_shift($entities);
         $intersection = array();
-
+        //echo memory_get_usage();
         foreach ($this->getFiles() as $file)
         {
             $checkFile = $directory . str_replace($this->firstScanDir, '', $file);
@@ -59,6 +60,9 @@ class FilesIntersectLocator implements IntersectAware
                 $checkFile
             );
         }
+        //echo PHP_EOL;
+        //echo memory_get_usage();
+        echo 'Finish computation of files intersection' . PHP_EOL;
         return $intersection;
     }
 

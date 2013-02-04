@@ -52,11 +52,16 @@ class MethodsLocator
      */
     function getDifference()
     {
+        echo 'Start computation of methods differences' . PHP_EOL;
         $result = array();
 
         $classes = $this->getClassesIntersect()->getIntersection();
 
         foreach ($classes as $classScanners) {
+
+            if (extension_loaded('igbinary')) {
+                $classScanners = igbinary_unserialize($classScanners);
+            }
 
             $methods = $this->getMethodNamesIntersect($classScanners);
 
@@ -89,7 +94,7 @@ class MethodsLocator
 
             $result = array_merge($result, $this->getMethodsDifference($info, $info2));
         }
-
+        echo 'Finish computation of methods differences' . PHP_EOL;
         return $result;
     }
 
@@ -236,7 +241,7 @@ class MethodsLocator
     }
 
     /**
-     * @param $classesIntersect
+     * @param ClassIntersectLocator $classesIntersect
      *
      * @return MethodsLocator
      */
