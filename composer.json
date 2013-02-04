@@ -2,6 +2,7 @@
     "name":"olekhy/class-comparer",
     "description":"useful to find difference in same classes in different directories",
     "type": "library",
+    "license": "MIT",
     "keywords": ["zf2", "class", "compare", "analysis"],
     "autoload":{
         "psr-0":{
