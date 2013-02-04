@@ -5,9 +5,9 @@
  *         Date: 2/2/13
  *         Time: 11:59 PM
  */
-namespace ClassComparer\Difference\Result;
+namespace Compare\Difference\Result;
 
-class Methods
+class MethodsDifferenceResult
 {
     protected $className;
     protected $methodName;
@@ -93,6 +93,10 @@ class Methods
 
     public function __toString()
     {
+
+        if (empty($this->methodsDiff) && empty($this->paramsDiff)) {
+            return '';
+        }
 
         $methodInfo = '';
         $paramsInfo = '';

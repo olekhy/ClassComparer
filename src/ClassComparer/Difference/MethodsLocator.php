@@ -35,7 +35,7 @@ class MethodsLocator
      * @throws Exception\InvalidArgumentException
      */
     public function __construct($classesIntersect,
-                                $resultClassName = 'ClassComparer\\Difference\\Result\\Methods'
+                                $resultClassName = 'Compare\\Difference\\Result\\MethodsDifferenceResult'
     ) {
         if (!class_exists($resultClassName)) {
             throw new Exception\InvalidArgumentException(
