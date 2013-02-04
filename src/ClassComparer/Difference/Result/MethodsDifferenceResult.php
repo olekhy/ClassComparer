@@ -5,7 +5,7 @@
  *         Date: 2/2/13
  *         Time: 11:59 PM
  */
-namespace Compare\Difference\Result;
+namespace ClassComparer\Difference\Result;
 
 class MethodsDifferenceResult
 {
@@ -98,29 +98,45 @@ class MethodsDifferenceResult
             return '';
         }
 
-        $methodInfo = '';
-        $paramsInfo = '';
+        $methodInfo = array();
+        $paramsInfo = array();
         $format =<<<OUT
-Deference found in %s.
- %s
- %s
+Differences found in %s.
+%s
+%s
 OUT;
         $paths = array(
             $this->getPath1(),
             $this->getPath2()
         );
         foreach ($this->getMethodsDiff() as $n => $md) {
-            if (!empty($md)) {
-                $methodInfo = sprintf('info: %s in path: %s', join(', ', $md), $paths[$n]);
-            }
+            //if (!empty($md)) {
+                $methodInfo[] = sprintf(
+                    ' (%s) %s in path: %s', ($n + 1),  join(', ', $md), $paths[$n]
+                );
+            //}
         }
 
         foreach ($this->getParamsDiff() as $n => $pd) {
-            if (!empty($pd)) {
-                $paramsInfo = sprintf('info: %s in path: %s', join(', ', $pd), $paths[$n]);
-            }
+            //if (!empty($pd)) {
+                $paramsInfo[] = sprintf(
+                    ' (%s) %s in path: %s', ($n + 1), join(', ', $pd), $paths[$n]
+                );
+            //}
         }
+        $methodInfo = join("\n", $methodInfo);
+        $paramsInfo = join("\n", $paramsInfo);
 
-        return sprintf($format .PHP_EOL, $this->getMethodNameFull(), $methodInfo, $paramsInfo);
+        if (strlen($methodInfo) > 0) {
+            $methodInfo = "methods different:\n" . $methodInfo;
+        }
+        if (strlen($paramsInfo) > 0) {
+            $paramsInfo = "parameters different:\n" . $paramsInfo;
+        }
+        return
+            PHP_EOL
+            . sprintf($format, $this->getMethodNameFull(), $methodInfo, $paramsInfo)
+            . PHP_EOL
+            . PHP_EOL;
     }
 }

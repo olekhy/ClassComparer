@@ -7,6 +7,7 @@
  */
 namespace ClassComparer\Difference;
 
+
 use ClassComparer\Intersection\ClassIntersectLocator;
 use Zend\Code\Scanner\MethodScanner;
 use Zend\Code\Scanner\ClassScanner;
@@ -35,7 +36,7 @@ class MethodsLocator
      * @throws Exception\InvalidArgumentException
      */
     public function __construct($classesIntersect,
-                                $resultClassName = 'Compare\\Difference\\Result\\MethodsDifferenceResult'
+                                $resultClassName = 'ClassComparer\\Difference\\Result\\MethodsDifferenceResult'
     ) {
         if (!class_exists($resultClassName)) {
             throw new Exception\InvalidArgumentException(
@@ -157,7 +158,7 @@ class MethodsLocator
                 $accessor = 'unknown';
         }
         return array(
-            'params: ' . $methodScanner->getNumberOfParameters(),
+            $methodScanner->getNumberOfParameters() . ' parameters',
             ($methodScanner->isFinal() ? 'final' : 'non final'),
             ($methodScanner->isAbstract() ? 'abstract' : 'non abstract'),
             $accessor,
