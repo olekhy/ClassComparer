@@ -26,12 +26,26 @@ $directoryScanner = new DirectoryScanner;
 $directoryScanner->setBlacklist($config['blacklist']);
 
 try {
-    $intersectFilesFinder = new FilesIntersectLocator(
-        $config['directories'],
-        $directoryScanner
-    );
-    $methods = new MethodsLocator(new ClassIntersectLocator($intersectFilesFinder));
-    echo join(PHP_EOL, $methods->getDifference());
+
+    foreach ($config['directories'] as $directories) {
+        if (is_array($directories)) {
+            $intersectFilesFinder = new FilesIntersectLocator(
+                $directories,
+                $directoryScanner
+            );
+            $methods = new MethodsLocator(new ClassIntersectLocator($intersectFilesFinder));
+            echo join(PHP_EOL, $methods->getDifference());
+        } else {
+            $intersectFilesFinder = new FilesIntersectLocator(
+                $config['directories'],
+                $directoryScanner
+            );
+            $methods = new MethodsLocator(new ClassIntersectLocator($intersectFilesFinder));
+            echo join(PHP_EOL, $methods->getDifference());
+            break;
+        }
+    }
+
 } catch (Exception $e) {
     $t = $e->getTrace();
     $start = array_pop($t);
