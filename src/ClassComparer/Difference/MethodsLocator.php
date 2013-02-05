@@ -110,7 +110,7 @@ class MethodsLocator
         /** @var $paramScanners ParameterScanner[] */
         foreach ($paramScanners as $paramScanner) {
             $index = $paramScanner->getPosition();
-            $type = $paramScanner->isArray() ? 'array' : $paramScanner->getClass();
+            $type = $paramScanner->isArray() ? 'array' : $paramScanner->getClass() . ' ';
             $name = ($paramScanner->isPassedByReference() ? '&' : '') . '$' . $paramScanner->getName();
             $value = '';
             if ($paramScanner->isOptional()) {
@@ -120,7 +120,7 @@ class MethodsLocator
                     : 'null'
                 ));
             }
-
+            $value = str_replace(array("\n", "\r", "\t"), '', $value);
             $parameters[$index] = sprintf('%s%s%s', $type, $name, $value);
         }
         asort($parameters);
