@@ -196,8 +196,7 @@ class MethodsLocator
                             $methodName,
                             $methodsDiff,
                             $paramsDiff,
-                            array_shift($classPaths),
-                            array_shift($classPaths)
+                            $classPaths
                         );
                     }
                 }

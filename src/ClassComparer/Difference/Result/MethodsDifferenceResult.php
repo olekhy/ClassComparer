@@ -11,20 +11,19 @@ class MethodsDifferenceResult
 {
     protected $className;
     protected $methodName;
-    protected $path1;
-    protected $path2;
+    protected $paths;
     protected $methodsDiff;
     protected $paramsDiff;
 
     public function __construct($className, $method, $methodDiff,
-                                $paramsDiff, $path1, $path2
+                                $paramsDiff, $paths
     ) {
         $this->setMethodsDiff($methodDiff);
         $this->setParamsDiff($paramsDiff);
         $this->setClassName($className);
         $this->setMethodName($method);
-        $this->setPath1($path1);
-        $this->setPath2($path2);
+        $this->setPaths($paths);
+
     }
 
     public function setClassName($className)
@@ -71,25 +70,17 @@ class MethodsDifferenceResult
         return $this->paramsDiff;
     }
 
-    public function setPath1($path1)
+    public function setPaths($paths)
     {
-        $this->path1 = $path1;
+        $this->paths = $paths;
     }
 
-    public function getPath1()
+    public function getPaths()
     {
-        return $this->path1;
+        return $this->paths;
     }
 
-    public function setPath2($path2)
-    {
-        $this->path2 = $path2;
-    }
 
-    public function getPath2()
-    {
-        return $this->path2;
-    }
 
     public function __toString()
     {
@@ -105,10 +96,9 @@ Differences found in %s.
 %s
 %s
 OUT;
-        $paths = array(
-            $this->getPath1(),
-            $this->getPath2()
-        );
+
+        $paths = $this->getPaths();
+
         foreach ($this->getMethodsDiff() as $n => $md) {
             //if (!empty($md)) {
                 $methodInfo[] = sprintf(
