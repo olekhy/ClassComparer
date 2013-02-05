@@ -7,6 +7,7 @@ use ClassComparer\Intersection\FilesIntersectLocator;
 use ClassComparer\Intersection\ClassIntersectLocator;
 use ClassComparer\Difference\MethodsLocator;
 use ClassComparer\Scanner\DirectoryScanner;
+use Zend\Stdlib\ArrayUtils;
 
 /**
  * @todo fix MethodScanner to grab tokens correctly for empty abstract class method
@@ -18,32 +19,35 @@ $config = include 'config.php';
 
 ini_set('memory_limit', $config['memory_limit']);
 set_time_limit(0);
-ini_set('display_errors',1);
-error_reporting(E_USER_ERROR | E_ERROR);
+ini_set('display_errors', 1);
+error_reporting($config['error_reporting']);
 
 
 $directoryScanner = new DirectoryScanner;
 $directoryScanner->setBlacklist($config['blacklist']);
 
+$multiDirs = true;
+foreach ($config['directories'] as $items) {
+    $multiDirs = (bool) $multiDirs & ArrayUtils::isList($items);
+}
+
+$runnable = function($directories,  DirectoryScanner $directoryScanner) {
+    $intersectFilesFinder = new FilesIntersectLocator(
+        $directories,
+        $directoryScanner
+    );
+    $methods = new MethodsLocator(new ClassIntersectLocator($intersectFilesFinder));
+    echo join(PHP_EOL, $methods->getDifference());
+};
+
 try {
 
-    foreach ($config['directories'] as $directories) {
-        if (is_array($directories)) {
-            $intersectFilesFinder = new FilesIntersectLocator(
-                $directories,
-                $directoryScanner
-            );
-            $methods = new MethodsLocator(new ClassIntersectLocator($intersectFilesFinder));
-            echo join(PHP_EOL, $methods->getDifference());
-        } else {
-            $intersectFilesFinder = new FilesIntersectLocator(
-                $config['directories'],
-                $directoryScanner
-            );
-            $methods = new MethodsLocator(new ClassIntersectLocator($intersectFilesFinder));
-            echo join(PHP_EOL, $methods->getDifference());
-            break;
+    if ($multiDirs) {
+        foreach ($config['directories'] as $directories) {
+            $runnable($directories, $directoryScanner);
         }
+    } else {
+            $runnable($config['directories'], $directoryScanner);
     }
 
 } catch (Exception $e) {
