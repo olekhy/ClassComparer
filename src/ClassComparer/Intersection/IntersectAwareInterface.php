@@ -7,7 +7,7 @@
  */
 namespace ClassComparer\Intersection;
 
-interface IntersectAware
+interface IntersectAwareInterface
 {
 
     /**

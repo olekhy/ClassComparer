@@ -8,33 +8,30 @@
 namespace ClassComparer\Intersection;
 
 use ClassComparer\Scanner\DirectoryScanner;
-use Zend\Code\Scanner\FileScanner;
 
-class FilesIntersectLocator implements IntersectAware
+class FilesIntersectLocator implements IntersectAwareInterface
 {
-    /**
-     * @var DirectoryScanner
-     */
-    protected $scanner;
-
-    /**
-     * @var string directory where will scanned at first
-     */
-    protected $firstScanDir;
-
     /**
      * @var array paths to directories to scan
      */
     protected $entities;
 
     /**
-     * @param array $directories
-     * @param $scanner
+     * @var DirectoryScanner[]
      */
-    public function __construct(array $directories, $scanner)
+    protected $scanners;
+
+    /**
+     * @param array $directories
+     * @param $scanners
+     *
+     * @internal param DirectoryScanner $scanner
+     */
+    public function __construct(array $directories, $scanners)
     {
         $this->setDirectoriesToScan($directories);
-        $this->setScanner($scanner);
+        $this->setScanners($scanners);
+
     }
 
     /**
@@ -43,39 +40,24 @@ class FilesIntersectLocator implements IntersectAware
      */
     public function getIntersection()
     {
-        echo 'Start computation of files intersection' . PHP_EOL;
-        $entities = $this->getEntities();
-        $directory = array_shift($entities);
+        $arrays = array();
         $intersection = array();
-        //echo memory_get_usage();
-        foreach ($this->getFiles() as $file)
-        {
-            $checkFile = $directory . str_replace($this->firstScanDir, '', $file);
-            if (!file_exists($checkFile)) {
-                continue;
-            }
 
-            $intersection[] = array(
-                $file,
-                $checkFile
-            );
+        foreach ($this->getScanners() as $scanner) {
+            $arrays[] = $scanner->getFilesRel();
         }
-        //echo PHP_EOL;
-        //echo memory_get_usage();
-        echo 'Finish computation of files intersection' . PHP_EOL;
+
+        $relativePathsIntersected = call_user_func_array('array_intersect', $arrays);
+
+        foreach ($relativePathsIntersected as $path) {
+            $res = array();
+            foreach ($this->getEntities() as $entity) {
+                 $res[] = $entity . $path;
+            }
+            $intersection[] = $res;
+        }
+
         return $intersection;
-    }
-
-
-    /**
-     *
-     * @return FileScanner[]
-     */
-    protected function getFiles()
-    {
-        $scanner = $this->getScanner();
-        $scanner->addDirectory($this->firstScanDir);
-        return $scanner->getFiles();
     }
 
     /**
@@ -99,10 +81,9 @@ class FilesIntersectLocator implements IntersectAware
         }
 
         if ($error || empty($directories) || count($directories) < 2) {
-            throw new Exception\InvalidArgumentException('Invalid directory was provided');
+            throw new Exception\InvalidArgumentException('Invalid directory were provided');
         }
         $this->entities = $directories;
-        $this->firstScanDir = array_shift($this->entities);
         return $this;
     }
 
@@ -126,24 +107,24 @@ class FilesIntersectLocator implements IntersectAware
         return $this;
     }
 
-
     /**
-     * @param DirectoryScanner $directoryScanner
      *
-     * @return AbstractMethodsIntersectLocator
+     * @return DirectoryScanner[]
      */
-    public function setScanner(DirectoryScanner $directoryScanner)
+    public function getScanners()
     {
-        $this->scanner = $directoryScanner;
-        return $this;
+        return $this->scanners;
     }
 
     /**
-     * @return DirectoryScanner
+     * @param DirectoryScanner[] $scanners
+     *
+     * @return FilesIntersectLocator
      */
-    public function getScanner()
+    protected function setScanners(array $scanners)
     {
-        return $this->scanner;
+        $this->scanners = $scanners;
+        return $this;
     }
 
 }
