@@ -8,20 +8,23 @@
 namespace ClassComparer\Difference;
 
 
-use ClassComparer\Intersection\ClassIntersectLocator;
+use ClassComparer\Intersection\ClassesIntersectLocator;
+use ClassComparer\Difference\Result\MethodsDifferenceResultInterface;
 use Zend\Code\Scanner\MethodScanner;
 use Zend\Code\Scanner\ClassScanner;
 use Zend\Code\Scanner\ParameterScanner;
 
 
-class MethodsLocator
+class MethodSignsDifferenceLocator
 {
     const MODIFIERS = 'modifiers';
     const PARAMS = 'params';
+    const SIGNATURE = 'signature';
 
     /**
      * @var ClassIntersectLocator
      */
+
     protected $classesIntersect;
 
     /**
@@ -35,7 +38,7 @@ class MethodsLocator
      *
      * @throws Exception\InvalidArgumentException
      */
-    public function __construct($classesIntersect,
+    public function __construct(ClassesIntersectLocator $classesIntersect,
                                 $resultClassName = 'ClassComparer\\Difference\\Result\\MethodsDifferenceResult'
     ) {
         if (!class_exists($resultClassName)) {
@@ -43,6 +46,7 @@ class MethodsLocator
                 sprintf('Invalid result class name %s', $resultClassName)
             );
         }
+
         $this->classNameDiffResultObject = $resultClassName;
         $this->setClassesIntersect($classesIntersect);
     }
@@ -52,16 +56,10 @@ class MethodsLocator
      */
     function getDifference()
     {
-        echo 'Start computation of methods differences' . PHP_EOL;
         $result = array();
 
         $classes = $this->getClassesIntersect()->getIntersection();
-
         foreach ($classes as $classScanners) {
-
-            if (extension_loaded('igbinary')) {
-                $classScanners = igbinary_unserialize($classScanners);
-            }
 
             $methods = $this->getMethodNamesIntersect($classScanners);
 
@@ -81,11 +79,13 @@ class MethodsLocator
                 foreach ($methods as $methodName) {
                     try {
                         $methodScanner = $classScanner->getMethod($methodName);
+
+
                         $modifiers = $this->getMethodModifiersInfo($methodScanner);
                         $parameters = $this->getMethodParamsInfo($methodScanner);
+                        $info[$className][$methodName][static::SIGNATURE][] =
+                            array(sprintf('%s%s%s', $modifiers, $methodName, $parameters));
 
-                        $info[$className][$methodName][static::MODIFIERS][] = $modifiers;
-                        $info[$className][$methodName][static::PARAMS][] = $parameters;
                     }  catch (\Exception $e) {
 
                     }
@@ -94,7 +94,7 @@ class MethodsLocator
 
             $result = array_merge($result, $this->getMethodsDifference($info, $info2));
         }
-        echo 'Finish computation of methods differences' . PHP_EOL;
+
         return $result;
     }
 
@@ -110,21 +110,22 @@ class MethodsLocator
         /** @var $paramScanners ParameterScanner[] */
         foreach ($paramScanners as $paramScanner) {
             $index = $paramScanner->getPosition();
-            $type = $paramScanner->isArray() ? 'array' : $paramScanner->getClass() . ' ';
+            $type = $paramScanner->isArray() ? 'array' : $paramScanner->getClass();
+            $type = $type ? $type . ' ' : '';
             $name = ($paramScanner->isPassedByReference() ? '&' : '') . '$' . $paramScanner->getName();
             $value = '';
             if ($paramScanner->isOptional()) {
                 $value = ' = ' . trim((
                 $paramScanner->isDefaultValueAvailable()
                     ? $paramScanner->getDefaultValue()
-                    : 'null'
+                    : ''
                 ));
             }
-            $value = str_replace(array("\n", "\r", "\t"), '', $value);
+            $value = preg_replace('/\s+/', ' ', $value);
             $parameters[$index] = sprintf('%s%s%s', $type, $name, $value);
         }
         asort($parameters);
-        return $parameters;
+        return '(' . join(', ', $parameters) . ')';
     }
 
     /**
@@ -134,11 +135,14 @@ class MethodsLocator
      */
     protected function getMethodNamesIntersect(array $classScanners)
     {
-        $names = array();
+        $names = null;
         /** @var $classScanners ClassScanner[] */
         foreach ($classScanners as $classScanner) {
-            $names[] = $classScanner->getMethodNames();
+            if (null !== $classScanner) {
+                $names[] = $classScanner->getMethodNames();
+            }
         }
+
         return call_user_func_array('array_intersect', $names);
     }
 
@@ -160,14 +164,15 @@ class MethodsLocator
                 $accessor = 'public';
                 break;
             default :
-                $accessor = 'unknown';
+                $accessor = '';
         }
-        return array(
-            $methodScanner->getNumberOfParameters() . ' parameters',
-            ($methodScanner->isFinal() ? 'final' : 'non final'),
-            ($methodScanner->isAbstract() ? 'abstract' : 'non abstract'),
-            $accessor,
-            ($methodScanner->isStatic() ? 'static' : 'non static')
+
+        return sprintf('%s%s%s%s%s',
+            $methodScanner->isFinal() ? 'final ' : '',
+            $methodScanner->isAbstract() ? 'abstract ' : '',
+            $accessor . ' ',
+            $methodScanner->isStatic() ? 'static ' : '',
+            'function '
         );
     }
 
@@ -186,18 +191,16 @@ class MethodsLocator
 
                 foreach ($info[$className] as $methodName => $methodInfo) {
 
-                    $methodsDiff = $this->getDiff($methodInfo, static::MODIFIERS);
-                    $paramsDiff = $this->getDiff($methodInfo, static::PARAMS);
+                    $methodsDiff = $this->getDiff($methodInfo, static::SIGNATURE);
 
-                    if ($this->hasDifferences($methodsDiff, $paramsDiff)) {
-                        $classNameResult = $this->getClassNameDiffResultObject();
-                        $difference[] = $result = new $classNameResult(
-                            $className,
-                            $methodName,
-                            $methodsDiff,
-                            $paramsDiff,
-                            $classPaths
+                    if ($this->hasDifferences($methodsDiff)) {
+                        /** @var $resultClass MethodsDifferenceResultInterface*/
+                        $resultClass = $this->getClassNameDiffResultObject();
+                        $difference[] = new $resultClass(
+                            $className, $methodName, $methodsDiff, $classPaths
                         );
+                        //$difference[$className][$methodName]['diff'] = $methodsDiff;
+                        //$difference[$className][$methodName]['paths'] = $classPaths;
                     }
                 }
             }
@@ -221,6 +224,7 @@ class MethodsLocator
     protected function getDiff(array $methodInfo, $scope)
     {
         $result = array();
+
         if (isset($methodInfo[$scope])) {
             $result = array(
                 call_user_func_array('array_diff', $methodInfo[$scope]),
@@ -240,9 +244,9 @@ class MethodsLocator
     }
 
     /**
-     * @param ClassIntersectLocator $classesIntersect
+     * @param $classesIntersect
      *
-     * @return MethodsLocator
+     * @return MethodSignsDifferenceLocator
      */
     public function setClassesIntersect($classesIntersect)
     {
@@ -252,18 +256,13 @@ class MethodsLocator
 
     /**
      * @param array $methodsDiff
-     * @param array $paramsDiff
      *
      * @return bool
      */
-    private function hasDifferences(array $methodsDiff, array $paramsDiff)
+    private function hasDifferences(array $methodsDiff)
     {
         $hasDifference = false;
-        foreach ($paramsDiff as $diff) {
-            if (!empty($diff)) {
-                $hasDifference = true;
-            }
-        }
+
 
         foreach ($methodsDiff as $diff) {
             if (!empty($diff)) {
