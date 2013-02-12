@@ -24,9 +24,14 @@ class DirectoryScanner
     protected $directories;
 
     /**
-     * @var
+     * @var array
      */
-    protected $files;
+    protected $filesAbs;
+
+    /**
+     * @var array
+     */
+    protected  $filesRel;
 
     /**
      * @var array
@@ -96,17 +101,16 @@ class DirectoryScanner
                         $skip = true;
                         break;
                     }
-
-
                 }
 
                 if (!empty($skip)) {
                     continue;
                 }
 
-
-                if ($item->isFile() && pathinfo($item->getRealPath(), PATHINFO_EXTENSION) == 'php') {
-                    $this->files[] = $item->getRealPath();
+                $realPath = $item->getRealPath();
+                if ($item->isFile() && pathinfo($realPath, PATHINFO_EXTENSION) == 'php') {
+                    $this->filesRel[] = str_replace($directory, '', $realPath);
+                    $this->filesAbs[] = $realPath;
                 }
             }
         }
@@ -150,9 +154,18 @@ class DirectoryScanner
     /**
      * @return mixed
      */
-    public function getFiles()
+    public function getFilesAbs()
     {
         $this->scan();
-        return $this->files;
+        return $this->filesAbs;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getFilesRel()
+    {
+        $this->scan();
+        return $this->filesRel;
     }
 }
