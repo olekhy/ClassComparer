@@ -7,19 +7,6 @@ return array(
 
     'blacklist' => array(
         '.svn/',
-        'alice/public',
-        'bob/public',
-        'bob/data',
-        'conny/public',
-        'conny/data',
-        'log',
-        'logs',
-        'library/Apache',
-        'library/PHPExcel',
-        'library/Yii',
-        'library/Zend',
-        'vendor/tests',
-        'alice/vendor/tests'
     ),
     'directories' => array(
         (isset($argv[1])) ? $argv[1]: '',
